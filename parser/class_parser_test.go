@@ -77,20 +77,20 @@ func TestGetOrCreateStruct(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			parser := &ClassParser{
-				currentPackageName: tc.packageName,
-				structure:          make(map[string]map[string]*Struct),
-				allInterfaces:      make(map[string]struct{}),
-				allStructs:         make(map[string]struct{}),
+				CurrentPackageName: tc.packageName,
+				Structure:          make(map[string]map[string]*Struct),
+				AllInterfaces:      make(map[string]struct{}),
+				AllStructs:         make(map[string]struct{}),
 			}
-			parser.structure[tc.packageName] = make(map[string]*Struct)
+			parser.Structure[tc.packageName] = make(map[string]*Struct)
 			if tc.structure != nil {
-				parser.structure[tc.packageName][tc.structureName] = tc.structure
+				parser.Structure[tc.packageName][tc.structureName] = tc.structure
 			}
 
 			st := parser.getOrCreateStruct(tc.nameToLookFor)
 			if tc.expectedEmpty {
 				if !reflect.DeepEqual(st, &Struct{
-					PackageName:         parser.currentPackageName,
+					PackageName:         parser.CurrentPackageName,
 					Functions:           make([]*Function, 0),
 					Fields:              make([]*Field, 0),
 					Type:                "",
@@ -99,7 +99,7 @@ func TestGetOrCreateStruct(t *testing.T) {
 					Aggregations:        make(map[string]struct{}, 0),
 					PrivateAggregations: make(map[string]struct{}, 0),
 				}) {
-					t.Errorf("Expected resulting structure to be equal to %v, got %v", tc.structure, st)
+					t.Errorf("Expected resulting Structure to be equal to %v, got %v", tc.structure, st)
 				}
 			} else {
 
@@ -107,7 +107,7 @@ func TestGetOrCreateStruct(t *testing.T) {
 					t.Error("Expected a Struct, nil received")
 				}
 				if !reflect.DeepEqual(st, tc.structure) {
-					t.Errorf("Expected resulting structure to be equal to %v, got %v", tc.structure, st)
+					t.Errorf("Expected resulting Structure to be equal to %v, got %v", tc.structure, st)
 				}
 			}
 
@@ -134,8 +134,8 @@ func TestGetStruct(t *testing.T) {
 		Type: "class",
 	}
 	parser := getEmptyParser("main")
-	parser.structure["main"] = make(map[string]*Struct)
-	parser.structure["main"]["foo"] = st
+	parser.Structure["main"] = make(map[string]*Struct)
+	parser.Structure["main"]["foo"] = st
 	stt := parser.getStruct("main.foo")
 
 	if stt == nil {
@@ -338,7 +338,7 @@ func TestRenderCompositions(t *testing.T) {
 	}
 	extendsBuilder = &LineStringBuilder{}
 	parser.renderCompositions(st, "TestClass", extendsBuilder)
-	expectedResult = "\"" + builtinPackageName + ".int\" *-- \"main.TestClass\"\n"
+	expectedResult = "\"" + BuiltinPackageName + ".int\" *-- \"main.TestClass\"\n"
 	if extendsBuilder.String() != expectedResult {
 		t.Errorf("TestRenderCompositions: Expected %s got %s", expectedResult, extendsBuilder.String())
 	}
@@ -416,7 +416,7 @@ func TestRenderStructMethods(t *testing.T) {
 
 func getEmptyParser(packageName string) *ClassParser {
 	result := &ClassParser{
-		renderingOptions: &RenderingOptions{
+		RenderingOptions: &RenderingOptions{
 			Aggregations:    false,
 			Fields:          true,
 			Methods:         true,
@@ -425,14 +425,14 @@ func getEmptyParser(packageName string) *ClassParser {
 			Aliases:         true,
 			PrivateMembers:  true,
 		},
-		currentPackageName: packageName,
-		structure:          make(map[string]map[string]*Struct),
-		allInterfaces:      make(map[string]struct{}),
-		allStructs:         make(map[string]struct{}),
-		allAliases:         make(map[string]*Alias),
-		allRenamedStructs:  make(map[string]map[string]string),
+		CurrentPackageName: packageName,
+		Structure:          make(map[string]map[string]*Struct),
+		AllInterfaces:      make(map[string]struct{}),
+		AllStructs:         make(map[string]struct{}),
+		AllAliases:         make(map[string]*Alias),
+		AllRenamedStructs:  make(map[string]map[string]string),
 	}
-	result.structure[packageName] = make(map[string]*Struct)
+	result.Structure[packageName] = make(map[string]*Struct)
 	return result
 }
 
@@ -536,7 +536,7 @@ func TestNewClassDiagram(t *testing.T) {
 					stt := parser.getStruct(st.Name)
 					if st.Exists {
 						if stt == nil || stt.Type != st.Type {
-							t.Errorf("Expected structure %v to exist with the correct type, but got %v", st, stt)
+							t.Errorf("Expected Structure %v to exist with the correct type, but got %v", st, stt)
 						}
 					} else {
 						if stt != nil {
@@ -577,9 +577,9 @@ func TestGetPackageName(t *testing.T) {
 	s := &Struct{
 		PackageName: "main",
 	}
-	ty := p.getPackageName("int", s)
-	if ty != builtinPackageName {
-		t.Errorf("TestGetPackageName: expecting [%s], got [%s]", builtinPackageName, ty)
+	ty := p.GetPackageName("int", s)
+	if ty != BuiltinPackageName {
+		t.Errorf("TestGetPackageName: expecting [%s], got [%s]", BuiltinPackageName, ty)
 	}
 }
 
@@ -635,7 +635,7 @@ func TestRenderAggregations(t *testing.T) {
 			"File": {},
 		},
 	}
-	parser.renderingOptions.Aggregations = true
+	parser.RenderingOptions.Aggregations = true
 	aggregationsBuilder := &LineStringBuilder{}
 	parser.renderAggregations(st, "TestClass", aggregationsBuilder)
 	expectedResult := "\"main.TestClass\" o-- \"main.File\"\n"
@@ -652,7 +652,7 @@ func TestRenderAggregations(t *testing.T) {
 			},
 		},
 	}
-	parser.renderingOptions.Aggregations = true
+	parser.RenderingOptions.Aggregations = true
 	aggregationsBuilder = &LineStringBuilder{}
 	parser.renderAggregations(st, "TestClass", aggregationsBuilder)
 	expectedResult = ""
@@ -672,8 +672,8 @@ func TestSetRenderingOptions(t *testing.T) {
 		Aliases:         true,
 		PrivateMembers:  true,
 	}
-	if !reflect.DeepEqual(parser.renderingOptions, emptyRenderingOptions) {
-		t.Errorf("TestRenderingOptions: expected renderingOptions to be %v got %v", emptyRenderingOptions, parser.renderingOptions)
+	if !reflect.DeepEqual(parser.RenderingOptions, emptyRenderingOptions) {
+		t.Errorf("TestRenderingOptions: expected RenderingOptions to be %v got %v", emptyRenderingOptions, parser.RenderingOptions)
 	}
 	newRenderingOptions := &RenderingOptions{
 		Aggregations:     true,
@@ -695,8 +695,8 @@ func TestSetRenderingOptions(t *testing.T) {
 		RenderConnectionLabels: true,
 		RenderPrivateMembers:   false,
 	})
-	if !reflect.DeepEqual(parser.renderingOptions, newRenderingOptions) {
-		t.Errorf("TestRenderingOptions: expected renderingOptions to be %v got %v", newRenderingOptions, parser.renderingOptions)
+	if !reflect.DeepEqual(parser.RenderingOptions, newRenderingOptions) {
+		t.Errorf("TestRenderingOptions: expected RenderingOptions to be %v got %v", newRenderingOptions, parser.RenderingOptions)
 	}
 
 	err := parser.SetRenderingOptions(map[RenderingOption]interface{}{
@@ -907,8 +907,8 @@ hide methods
 @enduml
 `,
 		}, {
-			Name:        "Hide Private Members",
-			InputFolder: "../testingsupport/renderingoptions",
+			Name:             "Hide Private Members",
+			InputFolder:      "../testingsupport/renderingoptions",
 			RenderingOptions: map[RenderingOption]interface{}{},
 			ExpectedResult: `@startuml
 namespace renderingoptions {
@@ -1002,13 +1002,13 @@ func TestNewClassDiagramWithOptions(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	if parser.renderingOptions.Aggregations != true {
+	if parser.RenderingOptions.Aggregations != true {
 		t.Errorf("TestNewClassDiagramWithOptions: Expected Aggregations to be true got false")
 	}
 }
 
 func TestGenerateRenamedStructName(t *testing.T) {
-	generatedName := generateRenamedStructName(`a#b%c.d`)
+	generatedName := GenerateRenamedStructName(`a#b%c.d`)
 	if generatedName != "abcd" {
 		t.Errorf("TestGenerateRenamedStructName: Expected result to be abcd, got %s", generatedName)
 	}
@@ -1021,7 +1021,7 @@ func TestClassParser_handleFuncDecl(t *testing.T) {
 			List: nil,
 		},
 	})
-	if len(p.allStructs) != 0 {
+	if len(p.AllStructs) != 0 {
 		t.Error("expecting no structs to be created")
 	}
 }

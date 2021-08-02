@@ -273,7 +273,7 @@ func TestGetFieldType(t *testing.T) {
 }
 
 func TestIsPrimitiveStringPointer(t *testing.T) {
-	if !isPrimitiveString("*int") {
+	if !IsPrimitiveString("*int") {
 		t.Errorf("TestIsPrimitiveStringPointer: expecting true, got false")
 	}
 }

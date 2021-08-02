@@ -10,8 +10,8 @@ type Alias struct {
 }
 
 func getNewAlias(name, packageName, aliasOf string) *Alias {
-	if isPrimitiveString(name) {
-		name = fmt.Sprintf("%s.%s", builtinPackageName, name)
+	if IsPrimitiveString(name) {
+		name = fmt.Sprintf("%s.%s", BuiltinPackageName, name)
 	}
 	return &Alias{
 		Name:        name,

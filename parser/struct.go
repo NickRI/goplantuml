@@ -38,7 +38,7 @@ func (st *Struct) ImplementsInterface(inter *Struct) bool {
 	return true
 }
 
-//AddToComposition adds the composition relation to the structure. We want to make sure that *ExampleStruct
+//AddToComposition adds the composition relation to the Structure. We want to make sure that *ExampleStruct
 //gets added as ExampleStruct so that we can properly build the relation later to the
 //class identifier
 func (st *Struct) AddToComposition(fType string) {
@@ -74,7 +74,7 @@ func (st *Struct) addToPrivateAggregation(fType string) {
 	st.PrivateAggregations[fType] = struct{}{}
 }
 
-//AddField adds a field into this structure. It parses the ast.Field and extract all
+//AddField adds a field into this Structure. It parses the ast.Field and extract all
 //needed information
 func (st *Struct) AddField(field *ast.Field, aliases map[string]string, packageName string) {
 	theType, fundamentalTypes := getFieldType(field.Type, aliases, packageName)
@@ -103,7 +103,7 @@ func (st *Struct) AddField(field *ast.Field, aliases map[string]string, packageN
 	}
 }
 
-//AddMethod Parse the Field and if it is an ast.FuncType, then add the methods into the structure
+//AddMethod Parse the Field and if it is an ast.FuncType, then add the methods into the Structure
 func (st *Struct) AddMethod(method *ast.Field, aliases map[string]string) {
 	f, ok := method.Type.(*ast.FuncType)
 	if !ok {

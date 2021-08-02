@@ -72,7 +72,7 @@ func getMapType(v *ast.MapType, aliases map[string]string, packageName string) (
 
 	t1, f1 := getFieldType(v.Key, aliases, packageName)
 	t2, f2 := getFieldType(v.Value, aliases, packageName)
-	return fmt.Sprintf("<font color=blue>map</font>[%s]%s", t1, t2), append(f1, f2...)
+	return fmt.Sprintf("map[%s]%s", t1, t2), append(f1, f2...)
 }
 
 func getStarExp(v *ast.StarExpr, aliases map[string]string, packageName string) (string, []string) {
@@ -84,7 +84,7 @@ func getStarExp(v *ast.StarExpr, aliases map[string]string, packageName string) 
 func getChanType(v *ast.ChanType, aliases map[string]string, packageName string) (string, []string) {
 
 	t, f := getFieldType(v.Value, aliases, packageName)
-	return fmt.Sprintf("<font color=blue>chan</font> %s", t), f
+	return fmt.Sprintf("chan %s", t), f
 }
 
 func getStructType(v *ast.StructType, aliases map[string]string, packageName string) (string, []string) {
@@ -94,7 +94,7 @@ func getStructType(v *ast.StructType, aliases map[string]string, packageName str
 		t, _ := getFieldType(field.Type, aliases, packageName)
 		fieldList = append(fieldList, t)
 	}
-	return fmt.Sprintf("<font color=blue>struct</font>{%s}", strings.Join(fieldList, ", ")), []string{}
+	return fmt.Sprintf("struct{%s}", strings.Join(fieldList, ", ")), []string{}
 }
 
 func getInterfaceType(v *ast.InterfaceType, aliases map[string]string, packageName string) (string, []string) {
@@ -108,7 +108,7 @@ func getInterfaceType(v *ast.InterfaceType, aliases map[string]string, packageNa
 		t, _ := getFieldType(field.Type, aliases, packageName)
 		methods = append(methods, methodName+" "+t)
 	}
-	return fmt.Sprintf("<font color=blue>interface</font>{%s}", strings.Join(methods, "; ")), []string{}
+	return fmt.Sprintf("interface{%s}", strings.Join(methods, "; ")), []string{}
 }
 
 func getFuncType(v *ast.FuncType, aliases map[string]string, packageName string) (string, []string) {
@@ -128,7 +128,7 @@ func getFuncType(v *ast.FuncType, aliases map[string]string, packageName string)
 	} else {
 		returns = strings.Join(returnList, "")
 	}
-	return fmt.Sprintf("<font color=blue>func</font>(%s) %s", strings.Join(params, ", "), returns), []string{}
+	return fmt.Sprintf("func(%s) %s", strings.Join(params, ", "), returns), []string{}
 }
 
 func getEllipsis(v *ast.Ellipsis, aliases map[string]string, packageName string) (string, []string) {
@@ -180,10 +180,10 @@ var globalPrimitives = map[string]struct{}{
 }
 
 func isPrimitive(ty *ast.Ident) bool {
-	return isPrimitiveString(ty.Name)
+	return IsPrimitiveString(ty.Name)
 }
 
-func isPrimitiveString(t string) bool {
+func IsPrimitiveString(t string) bool {
 	_, ok := globalPrimitives[t]
 	return ok
 }

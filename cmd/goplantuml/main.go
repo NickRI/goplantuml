@@ -10,7 +10,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jfeliu007/goplantuml/render/mermaid"
+
+	"github.com/jfeliu007/goplantuml/render/plantuml"
+
 	goplantuml "github.com/jfeliu007/goplantuml/parser"
+	"github.com/jfeliu007/goplantuml/render"
 )
 
 // RenderingOptionSlice will implements the sort interface
@@ -49,6 +54,7 @@ func main() {
 	showOptionsAsNote := flag.Bool("show-options-as-note", false, "Show a note in the diagram with the none evident options ran with this CLI")
 	aggregatePrivateMembers := flag.Bool("aggregate-private-members", false, "Show aggregations for private members. Ignored if -show-aggregations is not used.")
 	hidePrivateMembers := flag.Bool("hide-private-members", false, "Hide private fields and methods")
+	renderType := flag.String("render-type", "mermaid", "Type of render (plantuml|mermaid), default mermaid")
 	flag.Parse()
 	renderingOptions := map[goplantuml.RenderingOption]interface{}{
 		goplantuml.RenderConnectionLabels:  *showConnectionLabels,
@@ -106,7 +112,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
-	rendered := result.Render()
+	var ren render.Renderer
+	switch *renderType {
+	case "plantuml":
+		ren = plantuml.NewRender()
+	case "mermaid":
+		ren = mermaid.NewRender()
+	}
+
+	rendered := ren.Render(result)
 	var writer io.Writer
 	if *output != "" {
 		writer, err = os.Create(*output)
