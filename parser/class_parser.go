@@ -20,9 +20,11 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -62,6 +64,7 @@ type ClassDiagramOptions struct {
 type RenderingOptions struct {
 	Title                   string
 	Notes                   string
+	ModuleBase              string
 	Aggregations            bool
 	Fields                  bool
 	Methods                 bool
@@ -130,8 +133,14 @@ type ClassParser struct {
 // files in the given directory passed in the ClassDiargamOptions. This will also alow for different types of FileSystems
 // Passed since it is part of the ClassDiagramOptions as well.
 func NewClassDiagramWithOptions(options *ClassDiagramOptions) (*ClassParser, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	classParser := &ClassParser{
 		renderingOptions: &RenderingOptions{
+			ModuleBase:       path.Base(cwd),
 			Aggregations:     false,
 			Fields:           true,
 			Methods:          true,
@@ -166,7 +175,10 @@ func NewClassDiagramWithOptions(options *ClassDiagramOptions) (*ClassParser, err
 					if _, ok := ignoreDirectoryMap[path]; ok {
 						return filepath.SkipDir
 					}
-					classParser.parseDirectory(path)
+					err := classParser.parseDirectory(path)
+					if err != nil {
+						return err
+					}
 				}
 				return nil
 			})
@@ -192,7 +204,10 @@ func NewClassDiagramWithOptions(options *ClassDiagramOptions) (*ClassParser, err
 			}
 		}
 	}
-	classParser.SetRenderingOptions(options.RenderingOptions)
+	err = classParser.SetRenderingOptions(options.RenderingOptions)
+	if err != nil {
+		return nil, err
+	}
 	return classParser, nil
 }
 
@@ -210,9 +225,9 @@ func NewClassDiagram(directoryPaths []string, ignoreDirectories []string, recurs
 }
 
 // parse the given ast.Package into the ClassParser structure
-func (p *ClassParser) parsePackage(node ast.Node) {
+func (p *ClassParser) parsePackage(node ast.Node, base string) {
 	pack := node.(*ast.Package)
-	p.currentPackageName = pack.Name
+	p.currentPackageName = base + "." + pack.Name
 	_, ok := p.structure[p.currentPackageName]
 	if !ok {
 		p.structure[p.currentPackageName] = make(map[string]*Struct)
@@ -237,21 +252,26 @@ func (p *ClassParser) parsePackage(node ast.Node) {
 }
 
 func (p *ClassParser) parseImports(impt *ast.ImportSpec) {
+	clean, _ := strconv.Unquote(impt.Path.Value)
 	if impt.Name != nil {
-		splitPath := strings.Split(impt.Path.Value, "/")
-		s := strings.TrimRight(splitPath[len(splitPath)-1], `"`)
-		p.allImports[impt.Name.Name] = s
+		p.allImports[impt.Name.Name] = strings.ReplaceAll(clean, "/", ".")
+	} else {
+		chunks := strings.Split(clean, "/")
+		p.allImports[chunks[len(chunks)-1]] = strings.Join(chunks, ".")
 	}
 }
 
 func (p *ClassParser) parseDirectory(directoryPath string) error {
 	fs := token.NewFileSet()
+
+	found := strings.LastIndex(directoryPath, p.renderingOptions.ModuleBase)
+	base := strings.Split(directoryPath[found:], "/")
 	result, err := parser.ParseDir(fs, directoryPath, nil, 0)
 	if err != nil {
 		return err
 	}
 	for _, v := range result {
-		p.parsePackage(v)
+		p.parsePackage(v, strings.Join(base[:len(base)-1], "."))
 	}
 	return nil
 }
@@ -274,17 +294,15 @@ func (p *ClassParser) handleFuncDecl(decl *ast.FuncDecl) {
 		}
 
 		// Only get in when the function is defined for a structure. Global functions are not needed for class diagram
-		theType, _ := getFieldType(decl.Recv.List[0].Type, p.allImports)
+		theType, _ := getFieldType(decl.Recv.List[0].Type, p.allImports, p.currentPackageName)
 		theType = replacePackageConstant(theType, "")
-		if theType[0] == "*"[0] {
-			theType = theType[1:]
-		}
+		theType = strings.Trim(theType, "*.")
 		structure := p.getOrCreateStruct(theType)
 		if structure.Type == "" {
 			structure.Type = "class"
 		}
 
-		fullName := fmt.Sprintf("%s.%s", p.currentPackageName, theType)
+		fullName := fmt.Sprintf("%s%s", p.currentPackageName, theType)
 		p.allStructs[fullName] = struct{}{}
 		structure.AddMethod(&ast.Field{
 			Names:   []*ast.Ident{decl.Name},
@@ -298,7 +316,7 @@ func (p *ClassParser) handleFuncDecl(decl *ast.FuncDecl) {
 
 func handleGenDecStructType(p *ClassParser, typeName string, c *ast.StructType) {
 	for _, f := range c.Fields.List {
-		p.getOrCreateStruct(typeName).AddField(f, p.allImports)
+		p.getOrCreateStruct(typeName).AddField(f, p.allImports, p.currentPackageName)
 	}
 }
 
@@ -309,8 +327,8 @@ func handleGenDecInterfaceType(p *ClassParser, typeName string, c *ast.Interface
 			p.getOrCreateStruct(typeName).AddMethod(f, p.allImports)
 			break
 		case *ast.Ident:
-			f, _ := getFieldType(t, p.allImports)
 			st := p.getOrCreateStruct(typeName)
+			f, _ := getFieldType(t, p.allImports, st.PackageName)
 			f = replacePackageConstant(f, st.PackageName)
 			st.AddToComposition(f)
 			break
@@ -343,9 +361,9 @@ func (p *ClassParser) processSpec(spec ast.Spec) {
 			declarationType = "interface"
 			handleGenDecInterfaceType(p, typeName, c)
 		default:
-			basicType, _ := getFieldType(getBasicType(c), p.allImports)
+			basicType, _ := getFieldType(getBasicType(c), p.allImports, p.currentPackageName)
 
-			aliasType, _ := getFieldType(c, p.allImports)
+			aliasType, _ := getFieldType(c, p.allImports, p.currentPackageName)
 			aliasType = replacePackageConstant(aliasType, "")
 			if !isPrimitiveString(typeName) {
 				typeName = fmt.Sprintf("%s.%s", p.currentPackageName, typeName)
@@ -697,12 +715,12 @@ func (p *ClassParser) getOrCreateStruct(name string) *Struct {
 
 // Returns an existing struct only if it was created. nil otherwhise
 func (p *ClassParser) getStruct(structName string) *Struct {
-	split := strings.SplitN(structName, ".", 2)
-	pack, ok := p.structure[split[0]]
+	split := strings.Split(structName, ".")
+	pack, ok := p.structure[strings.Join(split[:len(split)-1], ".")]
 	if !ok {
 		return nil
 	}
-	return pack[split[1]]
+	return pack[split[len(split)-1]]
 }
 
 // SetRenderingOptions Sets the rendering options for the Render() Function

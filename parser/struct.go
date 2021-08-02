@@ -76,8 +76,8 @@ func (st *Struct) addToPrivateAggregation(fType string) {
 
 //AddField adds a field into this structure. It parses the ast.Field and extract all
 //needed information
-func (st *Struct) AddField(field *ast.Field, aliases map[string]string) {
-	theType, fundamentalTypes := getFieldType(field.Type, aliases)
+func (st *Struct) AddField(field *ast.Field, aliases map[string]string, packageName string) {
+	theType, fundamentalTypes := getFieldType(field.Type, aliases, packageName)
 	theType = replacePackageConstant(theType, "")
 	if field.Names != nil {
 		theType = replacePackageConstant(theType, "")
