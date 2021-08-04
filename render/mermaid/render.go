@@ -150,7 +150,7 @@ func (r *renderer) renderCompositions(p *parser.ClassParser, structure *parser.S
 }
 
 func (r *renderer) underscore(val string) string {
-	return strings.ReplaceAll(val, ".", "_")
+	return strings.NewReplacer(".", "_", "-", "_").Replace(val)
 }
 
 func (r *renderer) renderAggregationMap(p *parser.ClassParser, aggregationMap map[string]struct{}, structure *parser.Struct, aggregations *parser.LineStringBuilder, name string) {
