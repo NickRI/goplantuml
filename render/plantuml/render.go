@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/AvraamMavridis/randomcolor"
 	"github.com/jfeliu007/goplantuml/parser"
 	"github.com/jfeliu007/goplantuml/render"
 )
@@ -14,6 +15,8 @@ const implements = `"implements"`
 const extends = `"extends"`
 const aggregates = `"uses"`
 const aliasOf = `"alias of"`
+const nodeSep = "skinparam nodesep 500"
+const ranskSep = "skinparam ranksep 1500"
 
 const aliasComplexNameComment = "'This class was created so that we can correctly have an alias pointing to this name. Since it contains dots that can break namespaces"
 
@@ -29,6 +32,8 @@ func NewRender() *renderer {
 func (r *renderer) Render(p *parser.ClassParser) string {
 	str := &parser.LineStringBuilder{}
 	str.WriteLineWithDepth(0, "@startuml")
+	str.WriteLineWithDepth(0, nodeSep)
+	str.WriteLineWithDepth(0, ranskSep)
 	if p.RenderingOptions.Title != "" {
 		str.WriteLineWithDepth(0, fmt.Sprintf(`title %s`, p.RenderingOptions.Title))
 	}
@@ -104,8 +109,8 @@ func (r *renderer) renderStructures(p *parser.ClassParser, pack string, structur
 }
 
 func (r *renderer) renderAliases(p *parser.ClassParser, str *parser.LineStringBuilder) {
-
-	aliasString := ""
+	var randColor = randomcolor.GetRandomColorInHex()
+	var aliasString string
 	if p.RenderingOptions.ConnectionLabels {
 		aliasString = aliasOf
 	}
@@ -125,7 +130,7 @@ func (r *renderer) renderAliases(p *parser.ClassParser, str *parser.LineStringBu
 				}
 			}
 		}
-		str.WriteLineWithDepth(0, fmt.Sprintf(`"%s" #.. %s"%s"`, aliasName, aliasString, alias.AliasOf))
+		str.WriteLineWithDepth(0, fmt.Sprintf(`"%s" #.[%s]. %s"%s"`, aliasName, randColor, aliasString, alias.AliasOf))
 	}
 }
 
@@ -185,7 +190,8 @@ func (r *renderer) renderAggregations(p *parser.ClassParser, structure *parser.S
 }
 
 func (r *renderer) renderCompositions(p *parser.ClassParser, structure *parser.Struct, name string, composition *parser.LineStringBuilder) {
-	orderedCompositions := []string{}
+	var randColor = randomcolor.GetRandomColorInHex()
+	var orderedCompositions []string
 
 	for c := range structure.Composition {
 		if !strings.Contains(c, ".") {
@@ -195,7 +201,7 @@ func (r *renderer) renderCompositions(p *parser.ClassParser, structure *parser.S
 		if p.RenderingOptions.ConnectionLabels {
 			composedString = extends
 		}
-		c = fmt.Sprintf(`"%s" *-- %s"%s.%s"`, c, composedString, structure.PackageName, name)
+		c = fmt.Sprintf(`"%s" *-[%s]- %s"%s.%s"`, c, randColor, composedString, structure.PackageName, name)
 		orderedCompositions = append(orderedCompositions, c)
 	}
 	sort.Strings(orderedCompositions)
@@ -212,6 +218,7 @@ func (r *renderer) updatePrivateAggregations(structure *parser.Struct, aggregati
 }
 
 func (r *renderer) renderAggregationMap(p *parser.ClassParser, aggregationMap map[string]struct{}, structure *parser.Struct, aggregations *parser.LineStringBuilder, name string) {
+	var randColor = randomcolor.GetRandomColorInHex()
 	var orderedAggregations []string
 	for a := range aggregationMap {
 		orderedAggregations = append(orderedAggregations, a)
@@ -228,13 +235,13 @@ func (r *renderer) renderAggregationMap(p *parser.ClassParser, aggregationMap ma
 			aggregationString = aggregates
 		}
 		if p.GetPackageName(a, structure) != parser.BuiltinPackageName {
-			aggregations.WriteLineWithDepth(0, fmt.Sprintf(`"%s.%s"%s o-- "%s"`, structure.PackageName, name, aggregationString, a))
+			aggregations.WriteLineWithDepth(0, fmt.Sprintf(`"%s.%s"%s o-[%s]- "%s"`, structure.PackageName, name, aggregationString, randColor, a))
 		}
 	}
 }
 
 func (r *renderer) renderExtends(p *parser.ClassParser, structure *parser.Struct, name string, extends *parser.LineStringBuilder) {
-
+	var randColor = randomcolor.GetRandomColorInHex()
 	var orderedExtends []string
 	for c := range structure.Extends {
 		if !strings.Contains(c, ".") {
@@ -244,7 +251,7 @@ func (r *renderer) renderExtends(p *parser.ClassParser, structure *parser.Struct
 		if p.RenderingOptions.ConnectionLabels {
 			implementString = implements
 		}
-		c = fmt.Sprintf(`"%s" <|-- %s"%s.%s"`, c, implementString, structure.PackageName, name)
+		c = fmt.Sprintf(`"%s" <|-[%s]- %s"%s.%s"`, c, randColor, implementString, structure.PackageName, name)
 		orderedExtends = append(orderedExtends, c)
 	}
 	sort.Strings(orderedExtends)

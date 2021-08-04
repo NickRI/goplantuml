@@ -1,3 +1,5 @@
+github.com/AvraamMavridis/randomcolor v0.0.0-20180822172341-208aff70bf2c h1:XLynE8YGJdvPN65iI+G+Ys5ZUVS6YxWk8WPe/FmBReg=
+github.com/AvraamMavridis/randomcolor v0.0.0-20180822172341-208aff70bf2c/go.mod h1:vX+Cl5GOtK2DkzgsggLoeNUbxAcUWBaybCKzVRYsRMo=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
