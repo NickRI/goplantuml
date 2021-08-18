@@ -94,14 +94,14 @@ func main() {
 	dirs, err := getDirectories()
 
 	if err != nil {
-		fmt.Println("usage:\ngoplantuml <DIR>\nDIR Must be a valid directory")
+		fmt.Println("usage:\ngouml <DIR>\nDIR Must be a valid directory")
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 	ignoredDirectories, err := getIgnoredDirectories(*ignore)
 	if err != nil {
 
-		fmt.Println("usage:\ngoplantuml [-ignore=<DIRLIST>]\nDIRLIST Must be a valid comma separated list of existing directories")
+		fmt.Println("usage:\ngouml [-ignore=<DIRLIST>]\nDIRLIST Must be a valid comma separated list of existing directories")
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
